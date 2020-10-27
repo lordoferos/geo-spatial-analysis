@@ -1,0 +1,795 @@
+---
+title: "Gambia MIn_Max Temperatures"
+author: "Orero Levi"
+date: "10/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load required packages }
+
+library(raster)
+library(ggplot2)
+library(leaflet)
+library(dplyr)
+library(lubridate)
+library(tidyverse)
+library(sf)
+```
+
+```{r read the data}
+#raster <- getData(name = 'worldclim', var = 'tmin', res =10, 
+                  #lat= 13.451290, lon =-16.573000)## land surface temperature(lst) raster
+
+raster2 <- brick('wc2.1_2.5m_prec_2016-09.tif')
+raster3 <- brick('gam_climate/tmax/wc2.1_2.5m_tmax_2000-01.tif')
+
+# Read shapefile method 1
+ward <- shapefile("GAM-SHP/Gmb_adm0.shp")## 
+
+
+ward2 = ward
+
+ward3 = ward
+
+wardcoun <- getData(name = 'GADM', country = "GMB", level = 1)
+
+
+#ward <- spTransform(ward,crs(raster)) ## transform wards
+
+
+# Raster 2
+ward2 <- spTransform(ward2,crs(raster2)) ## transform wards
+
+# Raster 3
+ward3 <- spTransform(ward3,crs(raster3)) ## transform wards
+```
+
+
+```{r read data for regions}
+# Method 1
+gam_regions <- shapefile("gmb_adm1/gmb_admbnda_adm1_lga_1m_wfp_ocha.shp")
+
+# Method 2
+gam_regions2 <- st_read("GAM.shp")
+
+```
+
+
+
+
+
+```{r check the data}
+raster
+raster2
+names(raster)
+names(raster2)
+names(raster) <- paste0(rep(month.abb, 2 ), sort(rep(2000:2018, 12)))
+
+names(raster3)
+```
+
+```{r}
+#plot(raster[[1]]) + plot(ward, add = T)
+
+#image <- crop(tab, wardcoun)
+#plot(image)
+```
+
+```{r crop the tif to just gambia}
+#e_x_t <- as(extent(-16.81736, -13.79093, 13.06466, 13.82689), 'SpatialPolygons')
+#crs(e_x_t) <- crs(raster)
+#cropd <- crop(raster, e_x_t)
+
+# Raster 2
+e_x_t2 <- as(extent(-16.81736, -13.79093, 13.06466, 13.82689), 'SpatialPolygons')
+crs(e_x_t2) <- crs(raster2)
+cropd2 <- crop(raster2, e_x_t2)
+
+
+# Raster 3
+e_x_t3 <- as(extent(-16.81736, -13.79093, 13.06466, 13.82689), 'SpatialPolygons')
+crs(e_x_t3) <- crs(raster3)
+cropd3 <- crop(raster3, e_x_t3)
+```
+
+```{r plot the cropped raster}
+#plot(cropd[[1]]) + plot(ward, add = T)
+
+# Raster 2
+plot(cropd2[[1]]) + plot(ward2, add = T)
+
+# Raster 3
+plot(cropd3[[1]]) + plot(ward3, add = T)
+
+title(main = 'Maximum Temperature (\u00B0C) in the Gambia - January 2000')
+```
+```{r}
+plot(mask(gam_2000_2018_tmax_st, gam_regions)[[13]]) + plot(ward, add = T)
+```
+
+## Function to plot and save monthly max temperatures
+```{r}
+mapper <- function(x,y,z){ #x is raster stack, #y is mask parameter # z is region
+  for (i in 1:12){
+    range = seq(i+12,204,12)
+    #mean of layers by month
+    layer = mean(x[[range]])
+    # save image
+    tiff( filename = paste0("gambia_plot ", month.name[i], ".tiff"), width= 850,
+          height = 600,units = "px")
+    #plot shapefile and raster stack
+    plot(mask(layer, y)) + plot(z, add = T)
+    title(main = paste0('Maximum Temperature (\u00B0C) in the Gambia in ', month.name[i]))
+    dev.off()
+  } 
+}
+```
+
+
+```{r}
+mapper(gam_2000_2018_tmax_st, gam_regions, ward)
+
+# Patch into one figure 2001-2016
+tiff( filename = "gambia_plot.tiff", width= 850,
+          height = 850,units = "px")
+par(mfrow = c(4,3), oma = c(0, 0, 2, 1))
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(13,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[1])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(14,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[2])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(15,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[3])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(16,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[4])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(17,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[5])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(18,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[6])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(19,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[7])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(20,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[8])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(21,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[9])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(22,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[10])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(23,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[11])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(24,204,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[12])
+mtext('Maximum Temperature (\u00B0C) in the Gambia 2001-2016', outer = TRUE, cex = 1.5)
+
+tiff( filename = "gambia_plot.tiff", width= 850,
+          height = 850,units = "px")
+```
+
+```{r plotTemperatures_max}
+# Patch into one figure 2001-2018
+tiff( filename = "gambia_plot_01-18.tiff", width= 850,
+          height = 850,units = "px")
+par(mfrow = c(4,3), oma = c(0, 0, 2, 1))
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(13,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[1])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(14,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[2]) 
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(15,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[3])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(16,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[4])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(17,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[5])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(18,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[6])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(19,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[7])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(20,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[8])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(21,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[9])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(22,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[10])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(23,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[11])
+plot(mask(mean(gam_2000_2018_tmax_st[[seq(24,228,12)]]), gam_regions)) + plot(ward, add = T)
+title(main = month.name[12])
+mtext('Maximum Temperature (\u00B0C) in the Gambia 2001-2018', outer = TRUE, cex = 1.5)
+```
+
+
+
+```{r}
+# Plot country shapefile
+leaflet()%>%
+  addTiles()%>%
+  addPolygons(data = ward)
+
+# Plot regions shapefile
+leaflet()%>%
+  addTiles()%>%
+  addPolygons(data = gam_regions)
+
+# Plot filtered shapefiles
+gam_regions_lower <- gam_regions2 %>% 
+  filter(ADM1 == "Lower River")
+
+gam_regions_upper <- gam_regions2 %>% 
+  filter(ADM1 == "Upper River")
+
+gam_regions_central <- gam_regions2 %>% 
+  filter(ADM1 == "Central River")
+
+leaflet()%>%
+  addTiles()%>%
+  addPolygons(data = gam_regions_lower)
+```
+
+
+```{r}
+# Raster 3
+plot(cropd3[[1]]) + plot(gam_regions_lower, add = T)
+```
+
+```{r masking only gambia}
+mr <- mask(cropd3, gam_regions)
+plot(mr)
+```
+
+
+```{r extract values}
+
+# Raster 2
+extract2 <- raster::extract(cropd2, ward2) %>%
+  data.frame()
+
+head(extract2)
+dim(extract2)
+
+# Raster 3
+extract3 <- raster::extract(cropd3, ward3) %>%
+  data.frame()
+
+head(extract3)
+dim(extract3)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r read all files and stack them}
+files <- list.files(path="C:/Users/LORERO/OneDrive - CGIAR/Documents/Gambia-Fire/gam_climate/tmax", pattern="*.tif", full.names=TRUE, recursive=FALSE)
+
+# Create function
+maskerTX <- function(x){
+  t <- brick(x, header=TRUE) # load file
+  # crop the tif to just gambia
+  e_x_t <- as(extent(-16.81736, -13.79093, 13.06466, 13.82689), 'SpatialPolygons')
+  crs(e_x_t) <- crs(t)
+  cropd <- crop(t, e_x_t)
+  # mask only gambia 
+  mr <- mask(cropd, gam_regions)
+  
+  # write to file
+  #save(mr, file = paste0(x,"saved.tif"))
+}
+
+
+#################
+# Stack 2000 values
+
+gam_2000_tmax <- lapply(files[1:12],maskerTX)
+gam_2000_tmax_st <- stack(gam_2000_tmax)
+
+# give proper names
+names(gam_2000_tmax_st) <- paste("tmax", outer(month.abb, 2000, paste, sep="-"), sep="-")
+names(gam_2000_tmax_st)
+```
+# Stack 2001 values
+```{r}
+gam_2001_tmax <- lapply(files[13:24],maskerTX)
+gam_2001_tmax_st <- stack(gam_2001_tmax)
+
+# give proper names
+names(gam_2001_tmax_st) <- paste("tmax", outer(month.abb, 2001, paste, sep="-"), sep="-")
+names(gam_2001_tmax_st)
+```
+
+# Stack 2002 values
+```{r}
+gam_2002_tmax <- lapply(files[25:36],maskerTX)
+gam_2002_tmax_st <- stack(gam_2002_tmax)
+
+# give proper names
+names(gam_2002_tmax_st) <- paste("tmax", outer(month.abb, 2002, paste, sep="-"), sep="-")
+names(gam_2002_tmax_st)
+```
+
+# Stack 2003 values
+```{r}
+gam_2003_tmax <- lapply(files[37:48],maskerTX)
+gam_2003_tmax_st <- stack(gam_2003_tmax)
+
+# give proper names
+names(gam_2003_tmax_st) <- paste("tmax", outer(month.abb, 2003, paste, sep="-"), sep="-")
+names(gam_2003_tmax_st)
+```
+
+# Stack 2004 values
+```{r}
+gam_2004_tmax <- lapply(files[49:60],maskerTX)
+gam_2004_tmax_st <- stack(gam_2004_tmax)
+
+# give proper names
+names(gam_2004_tmax_st) <- paste("tmax", outer(month.abb, 2004, paste, sep="-"), sep="-")
+names(gam_2004_tmax_st)
+```
+
+
+# Stack 2005 values
+```{r}
+gam_2005_tmax <- lapply(files[61:72],maskerTX)
+gam_2005_tmax_st <- stack(gam_2005_tmax)
+
+# give proper names
+names(gam_2005_tmax_st) <- paste("tmax", outer(month.abb, 2005, paste, sep="-"), sep="-")
+names(gam_2005_tmax_st)
+```
+
+# Stack 2006 values
+```{r}
+gam_2006_tmax <- lapply(files[73:84],maskerTX)
+gam_2006_tmax_st <- stack(gam_2006_tmax)
+
+# give proper names
+names(gam_2006_tmax_st) <- paste("tmax", outer(month.abb, 2006, paste, sep="-"), sep="-")
+names(gam_2006_tmax_st)
+```
+
+# Stack 2007 values
+```{r}
+gam_2007_tmax <- lapply(files[85:96],maskerTX)
+gam_2007_tmax_st <- stack(gam_2007_tmax)
+
+# give proper names
+names(gam_2007_tmax_st) <- paste("tmax", outer(month.abb, 2007, paste, sep="-"), sep="-")
+names(gam_2007_tmax_st)
+```
+
+# Stack 2008 values
+```{r}
+gam_2008_tmax <- lapply(files[97:108],maskerTX)
+gam_2008_tmax_st <- stack(gam_2008_tmax)
+
+# give proper names
+names(gam_2008_tmax_st) <- paste("tmax", outer(month.abb, 2008, paste, sep="-"), sep="-")
+names(gam_2008_tmax_st)
+```
+
+
+# Stack 2009 values
+```{r}
+gam_2009_tmax <- lapply(files[109:120],maskerTX)
+gam_2009_tmax_st <- stack(gam_2009_tmax)
+
+# give proper names
+names(gam_2009_tmax_st) <- paste("tmax", outer(month.abb, 2009, paste, sep="-"), sep="-")
+names(gam_2009_tmax_st)
+```
+
+
+# Stack 2010 values
+```{r}
+gam_2010_tmax <- lapply(files[121:132],maskerTX)
+gam_2010_tmax_st <- stack(gam_2010_tmax)
+
+# give proper names
+names(gam_2010_tmax_st) <- paste("tmax", outer(month.abb, 2010, paste, sep="-"), sep="-")
+names(gam_2010_tmax_st)
+```
+
+
+# Stack 2011 values
+```{r}
+gam_2011_tmax <- lapply(files[133:144],maskerTX)
+gam_2011_tmax_st <- stack(gam_2011_tmax)
+
+# give proper names
+names(gam_2011_tmax_st) <- paste("tmax", outer(month.abb, 2011, paste, sep="-"), sep="-")
+names(gam_2011_tmax_st)
+```
+
+
+# Stack 2012 values
+```{r}
+gam_2012_tmax <- lapply(files[145:156],maskerTX)
+gam_2012_tmax_st <- stack(gam_2012_tmax)
+
+# give proper names
+names(gam_2012_tmax_st) <- paste("tmax", outer(month.abb, 2012, paste, sep="-"), sep="-")
+names(gam_2012_tmax_st)
+```
+
+
+# Stack 2013 values
+```{r}
+gam_2013_tmax <- lapply(files[157:168],maskerTX)
+gam_2013_tmax_st <- stack(gam_2013_tmax)
+
+# give proper names
+names(gam_2013_tmax_st) <- paste("tmax", outer(month.abb, 2013, paste, sep="-"), sep="-")
+names(gam_2013_tmax_st)
+```
+
+# Stack 2014 values
+```{r}
+gam_2014_tmax <- lapply(files[169:180],maskerTX)
+gam_2014_tmax_st <- stack(gam_2014_tmax)
+
+# give proper names
+names(gam_2014_tmax_st) <- paste("tmax", outer(month.abb, 2014, paste, sep="-"), sep="-")
+names(gam_2014_tmax_st)
+```
+
+
+# Stack 2015 values
+```{r}
+gam_2015_tmax <- lapply(files[181:192],maskerTX)
+gam_2015_tmax_st <- stack(gam_2015_tmax)
+
+# give proper names
+names(gam_2015_tmax_st) <- paste("tmax", outer(month.abb, 2015, paste, sep="-"), sep="-")
+names(gam_2015_tmax_st)
+```
+
+
+# Stack 2016 values
+```{r}
+gam_2016_tmax <- lapply(files[193:204],maskerTX)
+gam_2016_tmax_st <- stack(gam_2016_tmax)
+
+# give proper names
+names(gam_2016_tmax_st) <- paste("tmax", outer(month.abb, 2016, paste, sep="-"), sep="-")
+names(gam_2016_tmax_st)
+```
+
+# Stack 2017 values
+```{r}
+gam_2017_tmax <- lapply(files[205:216],maskerTX)
+gam_2017_tmax_st <- stack(gam_2017_tmax)
+
+# give proper names
+names(gam_2017_tmax_st) <- paste("tmax", outer(month.abb, 2017, paste, sep="-"), sep="-")
+names(gam_2017_tmax_st)
+```
+
+
+# Stack 2018 values
+```{r}
+gam_2018_tmax <- lapply(files[217:228],maskerTX)
+gam_2018_tmax_st <- stack(gam_2018_tmax)
+
+# give proper names
+names(gam_2018_tmax_st) <- paste("tmax", outer(month.abb, 2018, paste, sep="-"), sep="-")
+names(gam_2018_tmax_st)
+```
+
+
+# Stack All Gambia Tmax values
+```{r}
+gam_2000_2018_tmax_st <- stack(gam_2000_tmax_st, gam_2001_tmax_st, gam_2002_tmax_st,
+                               gam_2003_tmax_st, gam_2004_tmax_st, gam_2005_tmax_st,
+                               gam_2006_tmax_st, gam_2007_tmax_st, gam_2008_tmax_st,
+                               gam_2009_tmax_st, gam_2010_tmax_st, gam_2011_tmax_st,
+                               gam_2012_tmax_st, gam_2013_tmax_st, gam_2014_tmax_st,
+                               gam_2015_tmax_st, gam_2016_tmax_st, gam_2017_tmax_st,
+                               gam_2018_tmax_st)
+
+names(gam_2000_2018_tmax_st)
+```
+
+# Extract Values 2000-2018
+```{r extracting max temp from 2000-2018}
+# Whole of Gambia
+extract_whole_gmb <- raster::extract(gam_2000_2018_tmax_st, extent(gam_regions)) %>%
+  data.frame()
+
+head(extract_whole_gmb)
+
+# Upper River
+extract_upper <- raster::extract(gam_2000_2018_tmax_st, extent(gam_regions_upper)) %>%
+  data.frame()
+
+head(extract_upper)
+
+# Central River
+extract_central <- raster::extract(gam_2000_2018_tmax_st, extent(gam_regions_central)) %>%
+  data.frame()
+
+head(extract_central)
+
+# Lower River
+
+extract_lower <- raster::extract(gam_2000_2018_tmax_st, extent(gam_regions_lower)) %>%
+  data.frame()
+
+head(extract_lower)
+```
+
+
+# Average Monthly Maximum Temperature
+## The Whole of Gambia
+```{r whole of gambia temp assessment}
+# The whole of Gambia
+extract_whole_gmb_tmax <- extract_whole_gmb %>%
+  summarise_all(list(MIN=min, MEAN=mean, MAX=max), na.rm = T)
+
+extract_whole_gmb_tmax 
+
+# Minimums
+extract_whole_gmb_tmax_min <- extract_whole_gmb_tmax %>%
+  select(ends_with("MIN")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".")%>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_whole_gmb_tmax_min)
+
+# Maximums
+extract_whole_gmb_tmax_max <- extract_whole_gmb_tmax %>%
+  select(ends_with("MAX")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".")%>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_whole_gmb_tmax_max)
+
+# Mean
+extract_whole_gmb_tmax_mean <- extract_whole_gmb_tmax %>%
+  select(ends_with("MEAN")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".") %>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_whole_gmb_tmax_mean)
+
+
+# Merge into one dataset for the whole of Gambia
+extracted_gambia_full <- cbind(extract_whole_gmb_tmax_min[,c(1:4)],
+                               extract_whole_gmb_tmax_max[,2],
+                               extract_whole_gmb_tmax_mean[,2])
+head(extracted_gambia_full)
+
+# Rename
+extracted_gambia_full <- extracted_gambia_full %>%
+                          rename(min_max_temp = "temp",
+                                 max_max_temp = "extract_whole_gmb_tmax_max[, 2]",
+                                 mean_max_temp = "extract_whole_gmb_tmax_mean[, 2]") %>%
+  # order columns
+  select(date, month, year, min_max_temp, max_max_temp, mean_max_temp)
+
+head(extracted_gambia_full)
+
+# Write the csv to file to use in regression model in gambia_rainfall_temp RMD
+write_csv(extracted_gambia_full, "extracted_gambia_full.csv")
+```
+## Upper River Gambia
+```{r upper river region temp assessment}
+# The Upper River region
+extract_upper_tmax <- extract_upper %>%
+  summarise_all(list(MIN=min, MEAN=mean, MAX=max), na.rm = T)
+
+head(extract_upper_tmax )
+
+# Minimums
+extract_upper_tmax_min <- extract_upper_tmax %>%
+  select(ends_with("MIN")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".")%>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_upper_tmax_min)
+
+# Maximums
+extract_upper_tmax_max <- extract_upper_tmax %>%
+  select(ends_with("MAX")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".")%>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_upper_tmax_max)
+
+# Mean
+extract_upper_tmax_mean <- extract_upper_tmax %>%
+  select(ends_with("MEAN")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".") %>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_upper_tmax_mean)
+
+
+# Merge into one dataset for the Upper River Gambia
+extracted_gambia_upper <- cbind(extract_upper_tmax_min[,c(1:4)],
+                               extract_upper_tmax_max[,2],
+                               extract_upper_tmax_mean[,2])
+head(extracted_gambia_upper)
+
+# Rename
+extracted_gambia_upper <- extracted_gambia_upper %>%
+                          rename(min_max_temp = "temp",
+                                 max_max_temp = "extract_upper_tmax_max[, 2]",
+                                 mean_max_temp = "extract_upper_tmax_mean[, 2]") %>%
+  # order columns
+  select(date, month, year, min_max_temp, max_max_temp, mean_max_temp) %>%
+  # Add region column
+  mutate(region = "Upper River")
+
+head(extracted_gambia_upper)
+
+```
+
+
+## The Central River Region of Gambia
+```{r central river region temp assessment}
+# The Central River Region of Gambia
+extract_central_tmax <- extract_central %>%
+  summarise_all(list(MIN=min, MEAN=mean, MAX=max), na.rm = T)
+
+head(extract_central_tmax)
+
+# Minimums
+extract_central_tmax_min <- extract_central_tmax %>%
+  select(ends_with("MIN")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".")%>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_central_tmax_min)
+
+# Maximums
+extract_central_tmax_max <- extract_central_tmax %>%
+  select(ends_with("MAX")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".")%>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_central_tmax_max)
+
+# Mean
+extract_central_tmax_mean <- extract_central_tmax %>%
+  select(ends_with("MEAN")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".") %>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_central_tmax_mean)
+
+
+
+# Merge into one dataset for the Central River Gambia
+extracted_gambia_central <- cbind(extract_central_tmax_min[,c(1:4)],
+                               extract_central_tmax_max[,2],
+                               extract_central_tmax_mean[,2])
+head(extracted_gambia_central)
+
+# Rename
+extracted_gambia_central <- extracted_gambia_central %>%
+                          rename(min_max_temp = "temp",
+                                 max_max_temp = "extract_central_tmax_max[, 2]",
+                                 mean_max_temp = "extract_central_tmax_mean[, 2]") %>%
+  # order columns
+  select(date, month, year, min_max_temp, max_max_temp, mean_max_temp)%>%
+  # Add region column
+  mutate(region = "Central River")
+
+head(extracted_gambia_central)
+
+```
+
+## The Lower Region of Gambia
+```{r lower river region temp assessment}
+# The Lower Region of Gambia
+extract_lower_tmax <- extract_lower %>%
+  summarise_all(list(MIN=min, MEAN=mean, MAX=max), na.rm = T)
+
+extract_lower_tmax 
+
+# Minimums
+extract_lower_tmax_min <- extract_lower_tmax %>%
+  select(ends_with("MIN")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".")%>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_lower_tmax_min)
+
+# Maximums
+extract_lower_tmax_max <- extract_lower_tmax %>%
+  select(ends_with("MAX")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".")%>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_lower_tmax_max)
+
+# Mean
+extract_lower_tmax_mean <- extract_lower_tmax %>%
+  select(ends_with("MEAN")) %>% t() %>% data.frame() %>% rownames_to_column() %>%
+  rename(date = "rowname", temp =".") %>%
+  mutate(date = str_extract(date, "[A-Za-z]{3}[.]\\d{4}")) %>%
+  mutate(date = str_replace(date, "[.]", "-"))%>%
+  mutate(date = mdy(date)) %>%
+  mutate(month = month(date), year = year(date))
+
+head(extract_lower_tmax_mean)
+
+
+# Merge into one dataset for the Lower River Gambia
+extracted_gambia_lower <- cbind(extract_lower_tmax_min[,c(1:4)],
+                               extract_lower_tmax_max[,2],
+                               extract_lower_tmax_mean[,2])
+head(extracted_gambia_lower)
+
+# Rename
+extracted_gambia_lower <- extracted_gambia_lower %>%
+                          rename(min_max_temp = "temp",
+                                 max_max_temp = "extract_lower_tmax_max[, 2]",
+                                 mean_max_temp = "extract_lower_tmax_mean[, 2]") %>%
+  # order columns
+  select(date, month, year, min_max_temp, max_max_temp, mean_max_temp) %>%
+  # Add region column
+  mutate(region = "Lower River")
+
+head(extracted_gambia_lower)
+
+```
+
+
