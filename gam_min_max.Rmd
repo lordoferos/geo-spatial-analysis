@@ -28,7 +28,7 @@ raster2 <- brick('wc2.1_2.5m_prec_2016-09.tif')
 raster3 <- brick('gam_climate/tmax/wc2.1_2.5m_tmax_2000-01.tif')
 
 # Read shapefile method 1
-ward <- shapefile("GAM-SHP/Gmb_adm0.shp")## 
+ward <- shapefile("Gmb_adm0.shp")## 
 
 
 ward2 = ward
