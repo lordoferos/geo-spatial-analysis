@@ -15,7 +15,7 @@ install.packages(c("raster", "ggplot2", "leaflet", "dplyr", "lubridate", "tidyve
 
 1. Clone the repository onto your local machine.
 
-2. Open extract_climate_data.Rmd in RStudio.
+2. Open gam_min_max.Rmd in RStudio.
 
 3. Run the code in extract_climate_data.R. This will extract climate data for the Gambia from the WorldClim database and save the data in a directory called output.
 
