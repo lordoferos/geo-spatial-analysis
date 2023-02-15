@@ -22,7 +22,7 @@ install.packages(c("raster", "ggplot2", "leaflet", "dplyr", "lubridate", "tidyve
 4. Once the data has been extracted, you can explore it using the various visualization tools provided in the visualizations directory. These visualizations include maps of the data using both ggplot2 and leaflet, as well as time series plots of the climate data.
 
 
-## NB - This repository is being updated with files from my local machine. Please check back later!
+#### NB - This repository is being updated with files from my local machine. Please check back later!
 
 
 
