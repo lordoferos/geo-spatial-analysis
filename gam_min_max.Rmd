@@ -1,5 +1,5 @@
 ---
-title: "Gambia MIn_Max Temperatures"
+title: "Gambia Min_Max Temperatures"
 author: "Orero Levi"
 date: "10/1/2020"
 output: html_document
